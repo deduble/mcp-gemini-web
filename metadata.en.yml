@@ -1,0 +1,172 @@
+name: mcp-gemini-web
+version: 0.2.3
+title: Gemini Web Search with Research Mode
+description: |
+  Advanced MCP server that combines Google's Gemini 2.5 Flash with Google Search grounding for powerful web research capabilities. Features both fast single-step search and deep multi-step research mode that plans queries, executes searches, and synthesizes results.
+
+author: deduble
+email: yunuskayalidere@gmail.com
+license: MIT
+homepage: https://github.com/deduble/mcp-gemini-web
+repository: https://github.com/deduble/mcp-gemini-web
+npm_package: https://www.npmjs.com/package/mcp-gemini-web
+
+category: search
+tags:
+  - web-search
+  - research
+  - grounding
+  - gemini
+  - google-search
+  - citations
+  - multi-step
+  - ai-powered
+
+features:
+  - "🔍 Google Search grounding with Gemini 2.5 Flash"
+  - "🧠 Research mode: plans → executes → synthesizes"
+  - "⚙️ Custom API endpoint support for proxy services"
+  - "📊 Rich metadata with sources and citations"
+  - "🔧 Environment-based configuration"
+  - "⚡ Fast normal mode and deep research mode"
+
+installation:
+  type: npm
+  command: npx -y mcp-gemini-web
+
+requirements:
+  - "Google AI API key (from https://aistudio.google.com/app/apikey)"
+  - "Or custom API endpoint with compatible proxy"
+
+configuration:
+  mcp_config: |
+    {
+      "gemini-web-search": {
+        "command": "npx",
+        "args": ["-y", "mcp-gemini-web"],
+        "env": {
+          "GEMINI_API_KEY": "your-api-key-here"
+        },
+        "alwaysAllow": ["web_search"]
+      }
+    }
+
+  custom_endpoint_config: |
+    {
+      "gemini-web-search": {
+        "command": "npx",
+        "args": ["-y", "mcp-gemini-web"],
+        "env": {
+          "GEMINI_API_KEY": "your-proxy-api-key",
+          "GENAI_BASE_URL": "https://your-custom-endpoint.com"
+        },
+        "alwaysAllow": ["web_search"]
+      }
+    }
+
+environment_variables:
+  - name: GEMINI_API_KEY
+    description: "Google AI API key (required)"
+    required: true
+  - name: GOOGLE_API_KEY  
+    description: "Alternative to GEMINI_API_KEY"
+    required: false
+  - name: GENAI_BASE_URL
+    description: "Custom API endpoint URL (optional)"
+    required: false
+  - name: GEMINI_BASE_URL
+    description: "Alternative to GENAI_BASE_URL"
+    required: false
+  - name: MODEL
+    description: "Gemini model to use (default: gemini-2.5-flash)"
+    required: false
+
+tools:
+  - name: web_search
+    description: "Grounded web search with citations"
+    parameters:
+      - name: q
+        type: string
+        description: "Search query"
+        required: true
+      - name: mode
+        type: enum
+        description: "Search mode: 'normal' (fast) or 'research' (deep)"
+        values: ["normal", "research"]
+        default: "normal"
+        required: false
+      - name: model
+        type: string
+        description: "Gemini model to use"
+        default: "gemini-2.5-flash"
+        required: false
+      - name: max_tokens
+        type: integer
+        description: "Maximum output tokens (64-8192)"
+        minimum: 64
+        maximum: 8192
+        required: false
+      - name: max_steps
+        type: integer
+        description: "Max research steps for research mode (1-6)"
+        minimum: 1
+        maximum: 6
+        default: 3
+        required: false
+
+examples:
+  - title: "Quick Web Search"
+    description: "Fast single-step search with grounded results"
+    usage: |
+      Use the web_search tool with:
+      {
+        "q": "latest Node.js features 2024",
+        "mode": "normal"
+      }
+
+  - title: "Deep Research"  
+    description: "Multi-step research that plans, executes, and synthesizes"
+    usage: |
+      Use the web_search tool with:
+      {
+        "q": "compare React vs Vue for enterprise applications",
+        "mode": "research",
+        "max_steps": 4
+      }
+
+  - title: "API Documentation Search"
+    description: "The server automatically prioritizes official docs for API queries"
+    usage: |
+      Use the web_search tool with:
+      {
+        "q": "FastAPI authentication middleware setup"
+      }
+
+use_cases:
+  - "Research complex topics with multiple perspectives"
+  - "Get up-to-date information with citations"
+  - "Find official documentation and API references"
+  - "Compare technologies and approaches"
+  - "Fact-check information with source attribution"
+  - "Generate grounded content with citations"
+
+technical_details:
+  - "Built with TypeScript and modern ES modules"
+  - "Uses official Google GenAI SDK v0.9.0"
+  - "Implements MCP protocol v1.4.1"
+  - "Supports custom API endpoints via httpOptions"
+  - "Comprehensive error handling and logging"
+  - "Full test coverage with mocked dependencies"
+
+keywords:
+  - mcp
+  - model-context-protocol
+  - gemini
+  - search
+  - web-search
+  - grounding
+  - research
+  - ai
+  - google-search
+  - citations
+  - proxy-support
