@@ -1,0 +1,53 @@
+{
+  "name": "mcp-gemini-web",
+  "version": "0.2.0",
+  "description": "MCP server exposing a grounded web search tool powered by Gemini 2.5 + Google Search grounding, with optional research mode.",
+  "type": "module",
+  "bin": {
+    "mcp-gemini-web": "./dist/src/server.js"
+  },
+  "main": "dist/src/server.js",
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "gemini",
+    "search",
+    "web-search",
+    "grounding",
+    "research",
+    "ai"
+  ],
+  "author": "Yunus",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yunus/mcp-gemini-web.git"
+  },
+  "homepage": "https://github.com/yunus/mcp-gemini-web#readme",
+  "bugs": {
+    "url": "https://github.com/yunus/mcp-gemini-web/issues"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/src/server.js",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@google/genai": "^0.9.0",
+    "@modelcontextprotocol/sdk": "^1.4.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
+  }
+}

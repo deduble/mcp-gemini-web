@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gemini-web-search": {
+      "command": "npx",
+      "args": ["-y", "mcp-gemini-web"],
+      "env": {
+        "GEMINI_API_KEY": "your-actual-gemini-api-key-here"
+      }
+    }
+  }
+}
