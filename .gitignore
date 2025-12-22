@@ -69,3 +69,7 @@ jspm_packages/
 
 # FuseBox cache
 .fusebox/
+
+# AI Assistant Rules (auto-generated)
+AGENTS.md
+.roo/

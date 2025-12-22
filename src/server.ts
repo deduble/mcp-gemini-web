@@ -26,8 +26,15 @@ const BASE_URL =
   process.env.GEMINI_BASE_URL ||
   undefined;
 
-const DEFAULT_MODEL = process.env.MODEL || "gemini-2.5-flash";
+const DEFAULT_MODEL = process.env.MODEL || "gemini-3-flash-preview";
+const FALLBACK_MODEL = "gemini-2.5-flash";
 
+/** Token limits for verbosity levels */
+const VERBOSITY_TOKENS: Record<string, number> = {
+  concise: 512,
+  normal: 2048,
+  detailed: 4096
+};
 
 const ai = new GoogleGenAI({
   apiKey: API_KEY,
@@ -119,7 +126,7 @@ async function researchCall({
         role: "user",
         parts: [{
           text:
-`You will create a brief research plan for this question:
+            `You will create a brief research plan for this question:
 
 "${question}"
 
@@ -175,14 +182,17 @@ Queries should prefer authoritative sources (official docs, standards, vendors, 
   const synthesis = await ai.models.generateContent({
     model,
     contents: [
-      { role: "user", parts: [{ text:
-`Synthesize a concise answer for:
+      {
+        role: "user", parts: [{
+          text:
+            `Synthesize a concise answer for:
 "${question}"
 
 Use these findings (markdown bullets allowed). Do NOT fabricate sources.
 
-${perQueryNotes.map((n, i) => `Q${i+1}: ${n.q}\n---\n${n.text}`).join("\n\n")}
-` }] }
+${perQueryNotes.map((n, i) => `Q${i + 1}: ${n.q}\n---\n${n.text}`).join("\n\n")}
+` }]
+      }
     ],
     config: {
       tools: [{ googleSearch: {} }],
@@ -203,36 +213,60 @@ ${perQueryNotes.map((n, i) => `Q${i+1}: ${n.q}\n---\n${n.text}`).join("\n\n")}
   };
 }
 
+/** Helper to format response based on include_sources option */
+function formatResponse(
+  text: string,
+  mode: string,
+  sources: Array<{ uri: string; title: string }>,
+  queries: string[],
+  includeSources: boolean
+): string {
+  if (!includeSources) {
+    return text;
+  }
+  const metadataLabel = mode === "research" ? "Research Metadata" : "Search Metadata";
+  return `${text}\n\n--- ${metadataLabel} ---\nMode: ${mode}\nQueries used: ${queries.join(', ')}\nSources found: ${sources.length}\n\nSources:\n${sources.map((s) => `- ${s.title || 'Untitled'}: ${s.uri}`).join('\n')}`;
+}
+
 /** Single tool: web_search */
 server.registerTool(
   "web_search",
   {
     title: "Grounded web search (Gemini + Google Search)",
     description:
-      "Grounded search with citations. mode='normal' for a single pass; mode='research' for a multi-step, deeper approach.",
+      "Grounded search with citations. mode='normal' for a single pass; mode='research' for a multi-step, deeper approach. Use verbosity to control output length.",
     inputSchema: z.object({
       q: z.string().min(1).describe("User query"),
       mode: z.enum(["normal", "research"]).default("normal")
         .describe("Search mode: 'normal' (fast) or 'research' (deeper multi-step)"),
-      model: z.string().default(DEFAULT_MODEL),
-      max_tokens: z.number().int().min(64).max(8192).optional(),
+      model: z.string().default(DEFAULT_MODEL)
+        .describe("Model to use. Options: gemini-3-flash-preview (default), gemini-3-pro-preview, gemini-2.5-flash, gemini-2.5-pro"),
+      verbosity: z.enum(["concise", "normal", "detailed"]).default("normal")
+        .describe("Output length: 'concise' (~512 tokens), 'normal' (~2048 tokens), 'detailed' (~4096 tokens)"),
+      max_tokens: z.number().int().min(64).max(8192).optional()
+        .describe("Override verbosity with exact token limit"),
       max_steps: z.number().int().min(1).max(6).default(3)
-        .describe("Only used in research mode: number of sub-queries to run (1-6)")
+        .describe("Only used in research mode: number of sub-queries to run (1-6)"),
+      include_sources: z.boolean().default(false)
+        .describe("Include source citations and metadata in response")
     }).shape
   },
-  async ({ q, mode, model, max_tokens, max_steps }) => {
+  async ({ q, mode, model, verbosity, max_tokens, max_steps, include_sources }) => {
+    // Determine token limit: explicit max_tokens overrides verbosity preset
+    const tokenLimit = max_tokens ?? VERBOSITY_TOKENS[verbosity] ?? VERBOSITY_TOKENS.normal;
+
     if (mode === "research") {
       const { text, sources, queries } = await researchCall({
         model,
         question: q,
         maxSteps: max_steps,
-        maxOutputTokens: max_tokens
+        maxOutputTokens: tokenLimit
       });
       return {
         content: [
           {
             type: "text",
-            text: `${text}\n\n--- Research Metadata ---\nMode: ${mode}\nQueries used: ${queries.join(', ')}\nSources found: ${sources.length}\n\nSources:\n${sources.map((s: any) => `- ${s.title || 'Untitled'}: ${s.uri}`).join('\n')}`
+            text: formatResponse(text, mode, sources, queries, include_sources)
           }
         ]
       };
@@ -240,13 +274,13 @@ server.registerTool(
       const { text, sources, queries } = await groundedCall({
         model,
         prompt: q,
-        maxOutputTokens: max_tokens
+        maxOutputTokens: tokenLimit
       });
       return {
         content: [
           {
             type: "text",
-            text: `${text}\n\n--- Search Metadata ---\nMode: ${mode}\nQueries used: ${queries.join(', ')}\nSources found: ${sources.length}\n\nSources:\n${sources.map((s: any) => `- ${s.title || 'Untitled'}: ${s.uri}`).join('\n')}`
+            text: formatResponse(text, mode, sources, queries, include_sources)
           }
         ]
       };
