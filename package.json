@@ -1,6 +1,6 @@
 {
   "name": "mcp-gemini-web",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "MCP server exposing a grounded web search tool powered by Gemini 3 + Google Search grounding, with configurable verbosity, optional sources, and research mode.",
   "type": "module",
   "bin": {
@@ -46,6 +46,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/node": "^25.0.3",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.3"

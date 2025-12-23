@@ -41,7 +41,7 @@ function getGeminiClient() {
 
 const server = new McpServer({
   name: "mcp-gemini-web",
-  version: "0.3.1"
+  version: "0.3.2"
 });
 
 /** ---------------------------------------------
