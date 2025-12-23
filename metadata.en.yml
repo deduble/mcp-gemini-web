@@ -1,8 +1,8 @@
 name: mcp-gemini-web
-version: 0.2.3
+version: 0.3.1
 title: Gemini Web Search with Research Mode
 description: |
-  Advanced MCP server that combines Google's Gemini 2.5 Flash with Google Search grounding for powerful web research capabilities. Features both fast single-step search and deep multi-step research mode that plans queries, executes searches, and synthesizes results.
+  Advanced MCP server that combines Google's Gemini models with Google Search grounding for web research. Includes fast single-step search, deeper multi-step research (plan → execute → synthesize), optional sources/metadata, batch search, and health checks with rate limiting, retries, and timeouts.
 
 author: deduble
 email: yunuskayalidere@gmail.com
@@ -23,12 +23,12 @@ tags:
   - ai-powered
 
 features:
-  - "🔍 Google Search grounding with Gemini 2.5 Flash"
-  - "🧠 Research mode: plans → executes → synthesizes"
-  - "⚙️ Custom API endpoint support for proxy services"
-  - "📊 Rich metadata with sources and citations"
-  - "🔧 Environment-based configuration"
-  - "⚡ Fast normal mode and deep research mode"
+  - "Google Search grounding with Gemini models"
+  - "Research mode: plan → execute → synthesize"
+  - "Batch search (parallel queries)"
+  - "Health checks and runtime metrics (optional live probe)"
+  - "Custom API endpoint support via httpOptions.baseUrl"
+  - "Rate limiting, retries, and per-request timeouts"
 
 installation:
   type: npm
@@ -47,7 +47,7 @@ configuration:
         "env": {
           "GEMINI_API_KEY": "your-api-key-here"
         },
-        "alwaysAllow": ["web_search"]
+        "alwaysAllow": ["web_search", "web_search_batch", "health_check"]
       }
     }
 
@@ -60,7 +60,7 @@ configuration:
           "GEMINI_API_KEY": "your-proxy-api-key",
           "GENAI_BASE_URL": "https://your-custom-endpoint.com"
         },
-        "alwaysAllow": ["web_search"]
+        "alwaysAllow": ["web_search", "web_search_batch", "health_check"]
       }
     }
 
@@ -78,7 +78,28 @@ environment_variables:
     description: "Alternative to GENAI_BASE_URL"
     required: false
   - name: MODEL
-    description: "Gemini model to use (default: gemini-2.5-flash)"
+    description: "Default Gemini model to use (default: gemini-3-flash-preview)"
+    required: false
+  - name: REQUEST_TIMEOUT
+    description: "Default request timeout in ms (default: 60000)"
+    required: false
+  - name: RATE_LIMIT_RPM
+    description: "Requests per minute (default: 60)"
+    required: false
+  - name: RATE_LIMIT_MAX_BURST
+    description: "Max burst capacity (default: 10)"
+    required: false
+  - name: MAX_RETRIES
+    description: "Max retry attempts (default: 5)"
+    required: false
+  - name: BASE_RETRY_DELAY
+    description: "Base retry delay in ms (default: 1000)"
+    required: false
+  - name: MAX_RETRY_DELAY
+    description: "Max retry delay in ms (default: 60000)"
+    required: false
+  - name: JITTER_FACTOR
+    description: "Retry jitter factor 0-1 (default: 0.1)"
     required: false
 
 tools:
@@ -98,13 +119,19 @@ tools:
       - name: model
         type: string
         description: "Gemini model to use"
-        default: "gemini-2.5-flash"
+        default: "gemini-3-flash-preview"
+        required: false
+      - name: verbosity
+        type: enum
+        description: "Output length preset"
+        values: ["concise", "normal", "detailed"]
+        default: "normal"
         required: false
       - name: max_tokens
         type: integer
-        description: "Maximum output tokens (64-8192)"
+        description: "Maximum output tokens override (64-131072)"
         minimum: 64
-        maximum: 8192
+        maximum: 131072
         required: false
       - name: max_steps
         type: integer
@@ -112,6 +139,80 @@ tools:
         minimum: 1
         maximum: 6
         default: 3
+        required: false
+      - name: include_sources
+        type: boolean
+        description: "Include sources and metadata footer"
+        default: false
+        required: false
+      - name: research_concurrency
+        type: enum
+        description: "In research mode, run sub-queries in parallel or sequentially"
+        values: ["parallel", "sequential"]
+        default: "parallel"
+        required: false
+      - name: timeout
+        type: integer
+        description: "Per-request timeout in milliseconds"
+        minimum: 5000
+        maximum: 300000
+        required: false
+
+  - name: web_search_batch
+    description: "Run up to 20 grounded web searches in parallel"
+    parameters:
+      - name: queries
+        type: array
+        description: "List of queries (1-20)"
+        required: true
+      - name: model
+        type: string
+        description: "Gemini model to use"
+        default: "gemini-3-flash-preview"
+        required: false
+      - name: verbosity
+        type: enum
+        description: "Output length preset"
+        values: ["concise", "normal", "detailed"]
+        default: "normal"
+        required: false
+      - name: max_tokens
+        type: integer
+        description: "Maximum output tokens override (64-131072)"
+        minimum: 64
+        maximum: 131072
+        required: false
+      - name: include_sources
+        type: boolean
+        description: "Include sources and metadata footer"
+        default: false
+        required: false
+      - name: timeout
+        type: integer
+        description: "Per-request timeout in milliseconds"
+        minimum: 5000
+        maximum: 300000
+        required: false
+
+  - name: health_check
+    description: "Server health metrics (optional live probe)"
+    parameters:
+      - name: include_metrics
+        type: boolean
+        description: "Include detailed metrics in response"
+        default: true
+        required: false
+      - name: probe
+        type: boolean
+        description: "Perform a lightweight API probe"
+        default: false
+        required: false
+      - name: probe_timeout
+        type: integer
+        description: "Probe timeout in milliseconds"
+        minimum: 1000
+        maximum: 30000
+        default: 10000
         required: false
 
 examples:
@@ -155,7 +256,7 @@ technical_details:
   - "Uses official Google GenAI SDK v0.9.0"
   - "Implements MCP protocol v1.4.1"
   - "Supports custom API endpoints via httpOptions"
-  - "Comprehensive error handling and logging"
+  - "Rate limiting, retries, and per-request timeouts"
   - "Full test coverage with mocked dependencies"
 
 keywords:

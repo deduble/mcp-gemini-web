@@ -4,8 +4,10 @@
       "command": "npx",
       "args": ["-y", "mcp-gemini-web"],
       "env": {
-        "GEMINI_API_KEY": "your-actual-gemini-api-key-here"
-      }
+        "GEMINI_API_KEY": "your-actual-gemini-api-key-here",
+        "MODEL": "gemini-3-flash-preview"
+      },
+      "alwaysAllow": ["web_search", "web_search_batch", "health_check"]
     }
   }
 }
