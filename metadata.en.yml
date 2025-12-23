@@ -1,5 +1,5 @@
 name: mcp-gemini-web
-version: 0.3.2
+version: 0.3.3
 title: Gemini Web Search with Research Mode
 description: |
   Advanced MCP server that combines Google's Gemini models with Google Search grounding for web research. Includes fast single-step search, deeper multi-step research (plan → execute → synthesize), optional sources/metadata, batch search, and health checks with rate limiting, retries, and timeouts.

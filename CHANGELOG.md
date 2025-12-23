@@ -8,6 +8,9 @@
 ## 0.3.2
 - Fix CI build by adding Node.js type definitions.
 
+## 0.3.3
+- Fix npm Trusted Publishing by using npm >= 11.5.1 in CI.
+
 ## 0.3.0
 - Add verbosity presets and optional source metadata in responses.
 - Default model updated to `gemini-3-flash-preview`.
